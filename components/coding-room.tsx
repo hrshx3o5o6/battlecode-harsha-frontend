@@ -43,24 +43,33 @@ export default function CodingRoom() {
   const [testCases, setTestCases] = useState([])
   const fetchQuestion = async () => {
     try {
-      // Fetch all rows from the table
+      console.log("Fetching question...") // Debugging log
+
       let { data: questions, error } = await supabase
         .from("questions_python")
         .select("question, test_cases")
-  
+
+      // console.log("what is fetched", questions)
+
       if (error) {
         console.error("Error fetching questions:", error)
         return
       }
-  
+
+    
+      console.log("Number of questions fetched:", questions ? questions.length : 0) // Debugging log
+
       if (questions && questions.length > 0) {
-        // Pick a random question
         const randomIndex = Math.floor(Math.random() * questions.length)
         const randomQuestion = questions[randomIndex]
-  
-        // Update state with the fetched question and test cases
+
+        console.log("Random Question:", randomQuestion.question) // Debugging log
+        console.log("Test Cases:", randomQuestion.test_cases) // Debugging log
+
         setQuestion(randomQuestion.question)
         setTestCases(randomQuestion.test_cases)
+      } else {
+        console.error("No questions found in the database.")
       }
     } catch (error) {
       console.error("Error fetching question:", error)
@@ -188,23 +197,27 @@ export default function CodingRoom() {
               <CardContent className="space-y-4">
                 <div>
                   <h4 className="font-medium mb-2">Description</h4>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  {/* <p className="text-sm text-muted-foreground leading-relaxed">
                     Given an array of integers <code className="bg-muted px-1 py-0.5 rounded text-xs">nums</code> and an
                     integer <code className="bg-muted px-1 py-0.5 rounded text-xs">target</code>, return indices of the
                     two numbers such that they add up to target.
                   </p> {/* create a new column in the database with the description for each question. frgt to do that */}
-                  <p className="text-sm text-muted-foreground mt-2">
+                  {/* <p className="text-sm text-muted-foreground mt-2">
                     You may assume that each input would have exactly one solution, and you may not use the same element
                     twice.
+                  </p> */} 
+                  <p>
+                    {question}
                   </p>
                   <p className="text-sm text-muted-foreground mt-2"> 
+                    Test Cases:
                     {testCases}
                   </p>
                 </div>
 
                 <Separator />
 
-                <div>
+                {/* <div>
                   <h4 className="font-medium mb-2">Example 1</h4>
                   <div className="bg-muted p-3 rounded-md text-sm font-mono">
                     <div>
@@ -241,7 +254,7 @@ export default function CodingRoom() {
                     <li>• -10⁹ ≤ target ≤ 10⁹</li>
                     <li>• Only one valid answer exists</li>
                   </ul>
-                </div>
+                </div> */}
 
                 <Separator />
 
