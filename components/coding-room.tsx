@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/seperator"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Clock, Play, Send, Users, Zap } from "lucide-react"
 import { MonacoEditor } from "@/components/monaco-editor"
+import supabase from "@/lib/supabase-client"
 
 export default function CodingRoom() {
   const [timeLeft, setTimeLeft] = useState(1800) // 30 minutes in seconds
@@ -20,6 +21,10 @@ export default function CodingRoom() {
     const timer = setInterval(() => {
       setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0))
     }, 1000)
+
+    // Fetch a random question when the component mounts
+    fetchQuestion()
+
     return () => clearInterval(timer)
   }, [])
 
@@ -33,15 +38,43 @@ export default function CodingRoom() {
     setCode(value)
   }
 
+  // function to handle getting the code in from the database.
+  const [question, setQuestion] = useState("")
+  const [testCases, setTestCases] = useState([])
+  const fetchQuestion = async () => {
+    try {
+      // Fetch all rows from the table
+      let { data: questions, error } = await supabase
+        .from("questions_python")
+        .select("question, test_cases")
+  
+      if (error) {
+        console.error("Error fetching questions:", error)
+        return
+      }
+  
+      if (questions && questions.length > 0) {
+        // Pick a random question
+        const randomIndex = Math.floor(Math.random() * questions.length)
+        const randomQuestion = questions[randomIndex]
+  
+        // Update state with the fetched question and test cases
+        setQuestion(randomQuestion.question)
+        setTestCases(randomQuestion.test_cases)
+      }
+    } catch (error) {
+      console.error("Error fetching question:", error)
+    }
+  }
+
+
+  // Function to handle code submission
   const handleSubmit = async () => {
     const payload = {
       source_code: code,
       language_id: 71, // Assuming 71 corresponds to Python
       function_name: "add",
-      test_cases: [
-        { input: "1, 2", expected_output: "3" },
-        { input: "10, 20", expected_output: "30" },
-      ],
+      test_cases: testCases,
     }
   
     try {
@@ -65,6 +98,10 @@ export default function CodingRoom() {
       // Handle the error (e.g., show error message to the user)
     }
   }
+
+
+
+          
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -145,8 +182,8 @@ export default function CodingRoom() {
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Two Sum</CardTitle>
-                <CardDescription>Find two numbers in an array that add up to a target sum.</CardDescription>
+                <CardTitle className="text-lg">{question}</CardTitle>
+                <CardDescription>Test your solution against the provided test cases</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -155,10 +192,13 @@ export default function CodingRoom() {
                     Given an array of integers <code className="bg-muted px-1 py-0.5 rounded text-xs">nums</code> and an
                     integer <code className="bg-muted px-1 py-0.5 rounded text-xs">target</code>, return indices of the
                     two numbers such that they add up to target.
-                  </p>
+                  </p> {/* create a new column in the database with the description for each question. frgt to do that */}
                   <p className="text-sm text-muted-foreground mt-2">
                     You may assume that each input would have exactly one solution, and you may not use the same element
                     twice.
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2"> 
+                    {testCases}
                   </p>
                 </div>
 
