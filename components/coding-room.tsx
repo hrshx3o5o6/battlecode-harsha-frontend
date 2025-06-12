@@ -46,7 +46,7 @@ export default function CodingRoom() {
       console.log("Fetching question...") // Debugging log
 
       let { data: questions, error } = await supabase
-        .from("questions_python")
+        .from("long_questions_python")
         .select("question, test_cases")
 
       // console.log("what is fetched", questions)
@@ -83,8 +83,10 @@ export default function CodingRoom() {
       source_code: code,
       language_id: 71, // Assuming 71 corresponds to Python
       function_name: "add",
-      test_cases: testCases,
+      test_cases: Array.isArray(testCases) ? testCases : JSON.parse(testCases), // Ensure testCases is an array
     }
+
+    console.log("Payload being sent:", payload) // Debugging log
   
     try {
       const response = await fetch("http://localhost:5050/api/submit", {
