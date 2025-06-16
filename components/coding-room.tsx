@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -9,9 +9,12 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Clock, Play, Send, Users, Zap } from "lucide-react"
 import { MonacoEditor } from "@/components/monaco-editor"
 import supabase from "@/lib/supabase-client"
+// import { selectedLanguage, selectedDifficulty, selectedDuration} from "@/components/room-setup"
+
 
 export default function CodingRoom() {
   const [timeLeft, setTimeLeft] = useState(1800) // 30 minutes in seconds
+  const [roomId, setRoomId] = useState("") // Example room ID, replace with actual logic to get room ID
   const [code, setCode] = useState(`class Solution:
     def twoSum(num1, num2):
         # Write your solution here
@@ -23,10 +26,18 @@ export default function CodingRoom() {
     }, 1000)
 
     // Fetch a random question when the component mounts
-    fetchQuestion()
+    // fetchRoomData(roomId)
 
     return () => clearInterval(timer)
   }, [])
+
+  useEffect(() => {
+    const storedRoomId = localStorage.getItem("roomId")
+    if (storedRoomId) {
+      setRoomId(storedRoomId)
+      fetchRoomData(storedRoomId) // Fetch room data when roomId is set
+    }
+  }, []);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -41,41 +52,66 @@ export default function CodingRoom() {
   // function to handle getting the code in from the database.
   const [question, setQuestion] = useState("")
   const [testCases, setTestCases] = useState([])
-  const fetchQuestion = async () => {
-    try {
-      console.log("Fetching question...") // Debugging log
+  // const fetchQuestion = async () => {
+  //   try {
+  //     console.log("Fetching question...") // Debugging log
 
-      let { data: questions, error } = await supabase
-        .from("long_questions_python")
-        .select("question, test_cases")
+  //     let { data: questions, error } = await supabase
+  //       .from("long_questions_python")
+  //       .select("question, test_cases")
 
-      // console.log("what is fetched", questions)
+  //     // console.log("what is fetched", questions)
 
-      if (error) {
-        console.error("Error fetching questions:", error)
-        return
-      }
+  //     if (error) {
+  //       console.error("Error fetching questions:", error)
+  //       return
+  //     }
 
     
-      console.log("Number of questions fetched:", questions ? questions.length : 0) // Debugging log
+  //     console.log("Number of questions fetched:", questions ? questions.length : 0) // Debugging log
 
-      if (questions && questions.length > 0) {
-        const randomIndex = Math.floor(Math.random() * questions.length)
-        const randomQuestion = questions[randomIndex]
+  //     if (questions && questions.length > 0) {
+  //       const randomIndex = Math.floor(Math.random() * questions.length)
+  //       const randomQuestion = questions[randomIndex]
 
-        console.log("Random Question:", randomQuestion.question) // Debugging log
-        console.log("Test Cases:", randomQuestion.test_cases) // Debugging log
+  //       console.log("Random Question:", randomQuestion.question) // Debugging log
+  //       console.log("Test Cases:", randomQuestion.test_cases) // Debugging log
 
-        setQuestion(randomQuestion.question)
-        setTestCases(randomQuestion.test_cases)
-      } else {
-        console.error("No questions found in the database.")
-      }
-    } catch (error) {
-      console.error("Error fetching question:", error)
+  //       setQuestion(randomQuestion.question)
+  //       setTestCases(randomQuestion.test_cases)
+  //     } else {
+  //       console.error("No questions found in the database.")
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching question:", error)
+  //   }
+  // }
+
+
+  const fetchRoomData = async (roomId: string) => {
+  try {
+    const { data: room, error } = await supabase
+      .from("rooms")
+      .select("*, question:questions(*)") // joins question object
+      .eq("code", roomId)
+      .single();
+
+    if (error) {
+      console.error("Error fetching room:", error);
+      return;
     }
-  }
 
+    console.log("Room:", room);
+    console.log("Question:", room.question);
+
+    console.log("Question Text:", room.question.question);
+    setQuestion(room.question.question);
+    console.log("Test Cases:", room.question.test_cases);
+    setTestCases(room.question.test_cases);
+  } catch (error) {
+    console.error("Failed to fetch room data:", error);
+  }
+};
 
   // Function to handle code submission
   const handleSubmit = async () => {
